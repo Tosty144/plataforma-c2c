@@ -1,0 +1,43 @@
+### `src/main.js`
+```javascript
+async function registerUser() {
+  const name = document.getElementById('reg-name').value;
+  const email = document.getElementById('reg-email').value;
+  const password = document.getElementById('reg-pass').value;
+
+  const res = await fetch('/api/auth/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email, password })
+  });
+  
+  const data = await res.json();
+  document.getElementById('reg-msg').innerText = data.message || data.error;
+}
+
+async function createProduct() {
+  const title = document.getElementById('prod-title').value;
+  const price = document.getElementById('prod-price').value;
+  const category = document.getElementById('prod-cat').value;
+
+  await fetch('/api/products', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title, price, category })
+  });
+  
+  loadProducts();
+}
+
+async function loadProducts() {
+  const res = await fetch('/api/products');
+  const products = await res.json();
+  
+  const list = document.getElementById('product-list');
+  list.innerHTML = '';
+  products.forEach(p => {
+    const li = document.createElement('li');
+    li.innerText = `\({p.title} -\)\({p.price} [\){p.status}]`;
+    list.appendChild(li);
+  });
+}
