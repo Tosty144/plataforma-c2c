@@ -7,7 +7,7 @@ const orderRoutes = require('./routes/orderRoutes');
 const app = express();
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // <-- antes era express.json() sin límite explícito
 
 // Ruta base de prueba para la API
 app.get('/api', (req, res) => {
