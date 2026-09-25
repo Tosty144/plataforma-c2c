@@ -1,3 +1,46 @@
+let currentProductImage = null; // base64 de la imagen seleccionada
+
+// Muestra u oculta la sección de publicar según si hay usuario registrado
+function updateProductSectionVisibility() {
+    const isRegistered = sessionStorage.getItem('marketjhos_registered') === 'true';
+    const productSection = document.getElementById('product-section');
+
+    if (isRegistered) {
+        productSection.classList.remove('hidden');
+    } else {
+        productSection.classList.add('hidden');
+    }
+}
+
+// Al cargar la página, revisa si ya había un usuario registrado en esta sesión
+window.addEventListener('DOMContentLoaded', () => {
+    updateProductSectionVisibility();
+});
+
+function previewImage() {
+    const fileInput = document.getElementById('prod-img');
+    const preview = document.getElementById('img-preview');
+    const previewTag = document.getElementById('img-preview-tag');
+
+    const file = fileInput.files[0];
+
+    if (!file) {
+        preview.style.display = 'none';
+        currentProductImage = null;
+        return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+        currentProductImage = e.target.result; // base64
+        previewTag.src = currentProductImage;
+        preview.style.display = 'block';
+    };
+
+    reader.readAsDataURL(file);
+}
+
 async function registerUser() {
     const name = document.getElementById('reg-name').value.trim();
     const email = document.getElementById('reg-email').value.trim();
@@ -36,9 +79,12 @@ async function registerUser() {
         document.getElementById('reg-email').value = '';
         document.getElementById('reg-pass').value = '';
 
+        // Marca la sesión como registrada y desbloquea "Publicar Producto"
+        sessionStorage.setItem('marketjhos_registered', 'true');
+        updateProductSectionVisibility();
+
     } catch (err) {
         console.error('Error al registrar usuario:', err);
-
         message.innerText = 'Error al conectar con la API.';
     }
 }
@@ -65,7 +111,8 @@ async function createProduct() {
             body: JSON.stringify({
                 title,
                 price,
-                category
+                category,
+                imageUrl: currentProductImage || undefined
             })
         });
 
@@ -81,12 +128,14 @@ async function createProduct() {
         document.getElementById('prod-title').value = '';
         document.getElementById('prod-price').value = '';
         document.getElementById('prod-cat').value = '';
+        document.getElementById('prod-img').value = '';
+        document.getElementById('img-preview').style.display = 'none';
+        currentProductImage = null;
 
         await loadProducts();
 
     } catch (err) {
         console.error('Error al publicar producto:', err);
-
         message.innerText = 'Error al conectar con la API.';
     }
 }
@@ -103,57 +152,33 @@ async function loadProducts() {
         const products = await res.json();
 
         if (!res.ok) {
-            list.innerHTML = `
-                <p>
-                    Error al cargar los productos.
-                </p>
-            `;
+            list.innerHTML = `<p>Error al cargar los productos.</p>`;
             return;
         }
 
         list.innerHTML = '';
 
         if (!products || products.length === 0) {
-            list.innerHTML = `
-                <p class="empty">
-                    No hay productos disponibles.
-                </p>
-            `;
-
+            list.innerHTML = `<p class="empty">No hay productos disponibles.</p>`;
             return;
         }
 
         products.forEach(product => {
-
             const productElement = document.createElement('div');
-
             productElement.classList.add('product');
 
             productElement.innerHTML = `
+                <img src="${product.imageUrl}" alt="${product.title}">
                 <strong>${product.title}</strong>
-
-                <p>
-                    <strong>Precio:</strong>
-                    $${product.price}
-                </p>
-
-                <p>
-                    <strong>Categoría:</strong>
-                    ${product.category}
-                </p>
+                <p><strong>Precio:</strong> $${product.price}</p>
+                <p><strong>Categoría:</strong> ${product.category}</p>
             `;
 
             list.appendChild(productElement);
         });
 
     } catch (err) {
-
         console.error('Error al cargar productos:', err);
-
-        list.innerHTML = `
-            <p>
-                Error al conectar con la API.
-            </p>
-        `;
+        list.innerHTML = `<p>Error al conectar con la API.</p>`;
     }
 }

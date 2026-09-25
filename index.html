@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Plataforma C2C</title>
+    <title>MarketJhos</title>
 
     <style>
         * {
@@ -13,241 +12,242 @@
 
         body {
             margin: 0;
-            padding: 40px;
+            padding: 0;
             font-family: Arial, Helvetica, sans-serif;
-            background-color: white;
-            color: #222;
+            background-color: #111;
+            color: #f5f5f5;
         }
 
         .container {
             max-width: 1100px;
             margin: 0 auto;
+            padding: 0 24px 60px;
         }
 
-        h1 {
-            font-size: 38px;
+        /* HERO */
+        .hero {
+            background-color: #000;
+            padding: 60px 24px 50px;
+            text-align: center;
+            border-bottom: 4px solid #FFC400;
             margin-bottom: 45px;
+        }
+
+        .hero h1 {
+            font-size: 46px;
+            margin: 0 0 10px;
+            color: #FFC400;
+            letter-spacing: 1px;
+        }
+
+        .hero p {
+            font-size: 18px;
+            color: #ddd;
+            margin: 0;
         }
 
         .section {
             margin-bottom: 45px;
+            background-color: #1b1b1b;
+            border: 1px solid #2a2a2a;
+            border-radius: 10px;
+            padding: 28px;
         }
 
         h2 {
-            font-size: 28px;
-            margin-bottom: 22px;
+            font-size: 24px;
+            margin: 0 0 20px;
+            color: #FFC400;
         }
 
         .form {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             flex-wrap: wrap;
         }
 
         input {
-            height: 38px;
-            padding: 8px 10px;
-            border: 1px solid #999;
-            border-radius: 3px;
+            height: 40px;
+            padding: 8px 12px;
+            border: 1px solid #444;
+            border-radius: 6px;
             font-size: 15px;
+            background-color: #262626;
+            color: #f5f5f5;
         }
 
-        #reg-name {
+        input::placeholder {
+            color: #999;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #FFC400;
+        }
+
+        #reg-name, #reg-email, #reg-pass,
+        #prod-title, #prod-price, #prod-cat {
             width: 190px;
         }
 
-        #reg-email {
-            width: 190px;
-        }
-
-        #reg-pass {
-            width: 190px;
-        }
-
-        #prod-title {
-            width: 190px;
-        }
-
-        #prod-price {
-            width: 190px;
-        }
-
-        #prod-cat {
-            width: 190px;
+        input[type="file"] {
+            width: 220px;
+            background-color: transparent;
+            border: 1px dashed #555;
         }
 
         button {
             height: 42px;
             padding: 0 22px;
-            border: 1px solid #555;
+            border: none;
             border-radius: 22px;
-            background-color: #f5f5f5;
-            color: #222;
+            background-color: #FFC400;
+            color: #111;
             font-size: 15px;
+            font-weight: bold;
             cursor: pointer;
+            transition: background-color .15s ease;
         }
 
         button:hover {
-            background-color: #e9e9e9;
+            background-color: #e6b200;
+        }
+
+        button:disabled {
+            background-color: #555;
+            color: #999;
+            cursor: not-allowed;
         }
 
         .message {
             margin-top: 12px;
             font-size: 14px;
+            color: #FFC400;
+        }
+
+        #img-preview {
+            margin-top: 14px;
+            display: none;
+        }
+
+        #img-preview img {
+            max-width: 160px;
+            max-height: 160px;
+            border-radius: 8px;
+            border: 2px solid #FFC400;
         }
 
         #product-list {
             margin-top: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+            gap: 16px;
         }
 
         .product {
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 12px;
-            max-width: 700px;
+            border: 1px solid #2a2a2a;
+            border-radius: 10px;
+            padding: 14px;
+            background-color: #222;
+        }
+
+        .product img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 6px;
+            margin-bottom: 10px;
         }
 
         .product strong {
-            font-size: 18px;
+            font-size: 17px;
+            color: #FFC400;
         }
 
         .product p {
-            margin: 6px 0;
+            margin: 4px 0;
+            font-size: 14px;
         }
 
         .empty {
-            color: #777;
+            color: #888;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .locked-note {
+            font-size: 14px;
+            color: #999;
+            margin-top: 4px;
         }
 
         @media (max-width: 700px) {
-            body {
-                padding: 20px;
-            }
-
-            .form {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            input,
-            #reg-name,
-            #reg-email,
-            #reg-pass,
-            #prod-title,
-            #prod-price,
-            #prod-cat {
-                width: 100%;
-            }
-
-            button {
-                width: fit-content;
-            }
+            .hero { padding: 40px 16px 34px; }
+            .hero h1 { font-size: 32px; }
+            .form { flex-direction: column; align-items: stretch; }
+            input, button { width: 100%; }
         }
     </style>
 </head>
 
 <body>
 
+    <div class="hero">
+        <h1>MarketJhos</h1>
+        <p>Aquí puedes publicar y vender tus productos</p>
+    </div>
+
     <div class="container">
 
-        <h1>Plataforma C2C</h1>
-
         <!-- HU-01 -->
-        <section class="section">
-
-            <h2>HU-01: Registro de Usuarios</h2>
+        <section class="section" id="register-section">
+            <h2>Regístrate para empezar a vender</h2>
 
             <div class="form">
-
-                <input
-                    type="text"
-                    id="reg-name"
-                    placeholder="Nombre completo"
-                >
-
-                <input
-                    type="email"
-                    id="reg-email"
-                    placeholder="Correo electrónico"
-                >
-
-                <input
-                    type="password"
-                    id="reg-pass"
-                    placeholder="Contraseña"
-                >
-
-                <button onclick="registerUser()">
-                    Registrarse
-                </button>
-
+                <input type="text" id="reg-name" placeholder="Nombre completo">
+                <input type="email" id="reg-email" placeholder="Correo electrónico">
+                <input type="password" id="reg-pass" placeholder="Contraseña">
+                <button onclick="registerUser()">Registrarse</button>
             </div>
 
             <div id="reg-msg" class="message"></div>
-
         </section>
 
-
-        <!-- HU-02 -->
-        <section class="section">
-
-            <h2>HU-02: Publicar Producto</h2>
+        <!-- HU-02: oculto hasta registrarse -->
+        <section class="section hidden" id="product-section">
+            <h2>Publicar Producto</h2>
 
             <div class="form">
+                <input type="text" id="prod-title" placeholder="Título del producto">
+                <input type="number" id="prod-price" placeholder="Precio">
+                <input type="text" id="prod-cat" placeholder="Categoría">
+                <input type="file" id="prod-img" accept="image/*" onchange="previewImage()">
+                <button onclick="createProduct()">Publicar Producto</button>
+            </div>
 
-                <input
-                    type="text"
-                    id="prod-title"
-                    placeholder="Título del producto"
-                >
-
-                <input
-                    type="number"
-                    id="prod-price"
-                    placeholder="Precio"
-                >
-
-                <input
-                    type="text"
-                    id="prod-cat"
-                    placeholder="Categoría"
-                >
-
-                <button onclick="createProduct()">
-                    Publicar Producto
-                </button>
-
+            <div id="img-preview">
+                <img id="img-preview-tag" src="" alt="Vista previa">
             </div>
 
             <div id="prod-msg" class="message"></div>
-
         </section>
-
 
         <!-- HU-03 -->
         <section class="section">
+            <h2>Productos Disponibles</h2>
 
-            <h2>HU-03: Productos Disponibles</h2>
-
-            <button onclick="loadProducts()">
-                Cargar / Actualizar Lista
-            </button>
+            <button onclick="loadProducts()">Cargar / Actualizar Lista</button>
 
             <div id="product-list">
-                <p class="empty">
-                    Presiona "Cargar / Actualizar Lista" para ver los productos.
-                </p>
+                <p class="empty">Presiona "Cargar / Actualizar Lista" para ver los productos.</p>
             </div>
-
         </section>
 
     </div>
 
-
-    <!-- JavaScript -->
     <script src="./src/main.js"></script>
-
 </body>
 </html>
