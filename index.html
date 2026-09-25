@@ -1,43 +1,253 @@
-### `src/main.js`
-```javascript
-async function registerUser() {
-  const name = document.getElementById('reg-name').value;
-  const email = document.getElementById('reg-email').value;
-  const password = document.getElementById('reg-pass').value;
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  const res = await fetch('/api/auth/register', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, email, password })
-  });
-  
-  const data = await res.json();
-  document.getElementById('reg-msg').innerText = data.message || data.error;
-}
+    <title>Plataforma C2C</title>
 
-async function createProduct() {
-  const title = document.getElementById('prod-title').value;
-  const price = document.getElementById('prod-price').value;
-  const category = document.getElementById('prod-cat').value;
+    <style>
+        * {
+            box-sizing: border-box;
+        }
 
-  await fetch('/api/products', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ title, price, category })
-  });
-  
-  loadProducts();
-}
+        body {
+            margin: 0;
+            padding: 40px;
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: white;
+            color: #222;
+        }
 
-async function loadProducts() {
-  const res = await fetch('/api/products');
-  const products = await res.json();
-  
-  const list = document.getElementById('product-list');
-  list.innerHTML = '';
-  products.forEach(p => {
-    const li = document.createElement('li');
-    li.innerText = `\({p.title} -\)\({p.price} [\){p.status}]`;
-    list.appendChild(li);
-  });
-}
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 38px;
+            margin-bottom: 45px;
+        }
+
+        .section {
+            margin-bottom: 45px;
+        }
+
+        h2 {
+            font-size: 28px;
+            margin-bottom: 22px;
+        }
+
+        .form {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        input {
+            height: 38px;
+            padding: 8px 10px;
+            border: 1px solid #999;
+            border-radius: 3px;
+            font-size: 15px;
+        }
+
+        #reg-name {
+            width: 190px;
+        }
+
+        #reg-email {
+            width: 190px;
+        }
+
+        #reg-pass {
+            width: 190px;
+        }
+
+        #prod-title {
+            width: 190px;
+        }
+
+        #prod-price {
+            width: 190px;
+        }
+
+        #prod-cat {
+            width: 190px;
+        }
+
+        button {
+            height: 42px;
+            padding: 0 22px;
+            border: 1px solid #555;
+            border-radius: 22px;
+            background-color: #f5f5f5;
+            color: #222;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #e9e9e9;
+        }
+
+        .message {
+            margin-top: 12px;
+            font-size: 14px;
+        }
+
+        #product-list {
+            margin-top: 20px;
+        }
+
+        .product {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 12px;
+            max-width: 700px;
+        }
+
+        .product strong {
+            font-size: 18px;
+        }
+
+        .product p {
+            margin: 6px 0;
+        }
+
+        .empty {
+            color: #777;
+        }
+
+        @media (max-width: 700px) {
+            body {
+                padding: 20px;
+            }
+
+            .form {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            input,
+            #reg-name,
+            #reg-email,
+            #reg-pass,
+            #prod-title,
+            #prod-price,
+            #prod-cat {
+                width: 100%;
+            }
+
+            button {
+                width: fit-content;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>Plataforma C2C</h1>
+
+        <!-- HU-01 -->
+        <section class="section">
+
+            <h2>HU-01: Registro de Usuarios</h2>
+
+            <div class="form">
+
+                <input
+                    type="text"
+                    id="reg-name"
+                    placeholder="Nombre completo"
+                >
+
+                <input
+                    type="email"
+                    id="reg-email"
+                    placeholder="Correo electrónico"
+                >
+
+                <input
+                    type="password"
+                    id="reg-pass"
+                    placeholder="Contraseña"
+                >
+
+                <button onclick="registerUser()">
+                    Registrarse
+                </button>
+
+            </div>
+
+            <div id="reg-msg" class="message"></div>
+
+        </section>
+
+
+        <!-- HU-02 -->
+        <section class="section">
+
+            <h2>HU-02: Publicar Producto</h2>
+
+            <div class="form">
+
+                <input
+                    type="text"
+                    id="prod-title"
+                    placeholder="Título del producto"
+                >
+
+                <input
+                    type="number"
+                    id="prod-price"
+                    placeholder="Precio"
+                >
+
+                <input
+                    type="text"
+                    id="prod-cat"
+                    placeholder="Categoría"
+                >
+
+                <button onclick="createProduct()">
+                    Publicar Producto
+                </button>
+
+            </div>
+
+            <div id="prod-msg" class="message"></div>
+
+        </section>
+
+
+        <!-- HU-03 -->
+        <section class="section">
+
+            <h2>HU-03: Productos Disponibles</h2>
+
+            <button onclick="loadProducts()">
+                Cargar / Actualizar Lista
+            </button>
+
+            <div id="product-list">
+                <p class="empty">
+                    Presiona "Cargar / Actualizar Lista" para ver los productos.
+                </p>
+            </div>
+
+        </section>
+
+    </div>
+
+
+    <!-- JavaScript -->
+    <script src="./src/main.js"></script>
+
+</body>
+</html>
