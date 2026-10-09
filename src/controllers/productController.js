@@ -6,21 +6,37 @@ exports.getProducts = (req, res) => {
 };
 
 exports.createProduct = (req, res) => {
-  const { title, description, price, category, imageUrl, sellerId } = req.body;
-  if (!title || !price || !category) {
-    return res.status(400).json({ error: 'Faltan campos obligatorios' });
+  const { title, price, category, description, image, sellerId } = req.body;
+  if (!title || !price) {
+    return res.status(400).json({ error: 'Título y precio son obligatorios' });
   }
 
   const newProduct = productModel.create({
-    id: Date.now().toString(),
     title,
-    description,
-    price,
-    category,
-    imageUrl: imageUrl || 'https://via.placeholder.com/150',
-    sellerId: sellerId || 'user-123',
-    status: 'Disponible'
+    price: Number(price),
+    category: category || 'General',
+    description: description || '',
+    image: image || 'https://via.placeholder.com/300x200?text=MarketJhos',
+    sellerId: sellerId || 'vendedor-anonimo'
   });
 
   res.status(201).json(newProduct);
+};
+
+exports.updateProduct = (req, res) => {
+  const { id } = req.params;
+  const updated = productModel.update(id, req.body);
+  if (!updated) {
+    return res.status(404).json({ error: 'Producto no encontrado' });
+  }
+  res.json(updated);
+};
+
+exports.deleteProduct = (req, res) => {
+  const { id } = req.params;
+  const deleted = productModel.delete(id);
+  if (!deleted) {
+    return res.status(404).json({ error: 'Producto no encontrado' });
+  }
+  res.json({ message: 'Producto eliminado correctamente', id });
 };

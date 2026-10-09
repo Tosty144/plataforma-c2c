@@ -1,184 +1,230 @@
-let currentProductImage = null; // base64 de la imagen seleccionada
+let base64Image = '';
 
-// Muestra u oculta la sección de publicar según si hay usuario registrado
-function updateProductSectionVisibility() {
-    const isRegistered = sessionStorage.getItem('marketjhos_registered') === 'true';
-    const productSection = document.getElementById('product-section');
-
-    if (isRegistered) {
-        productSection.classList.remove('hidden');
-    } else {
-        productSection.classList.add('hidden');
-    }
+function previewImage(event) {
+  const file = event.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(e) { base64Image = e.target.result; };
+    reader.readAsDataURL(file);
+  }
 }
 
-// Al cargar la página, revisa si ya había un usuario registrado en esta sesión
-window.addEventListener('DOMContentLoaded', () => {
-    updateProductSectionVisibility();
-});
+function toggleAuthSection() {
+  const token = localStorage.getItem('token');
+  if (token) {
+    // Si ya tiene sesión, el botón sirve para cerrar sesión
+    localStorage.clear();
+    updateUI();
+  } else {
+    // Alterna la visibilidad del formulario de registro
+    const secAuth = document.getElementById('sec-auth');
+    secAuth.classList.toggle('hidden');
+  }
+}
 
-function previewImage() {
-    const fileInput = document.getElementById('prod-img');
-    const preview = document.getElementById('img-preview');
-    const previewTag = document.getElementById('img-preview-tag');
+function updateUI() {
+  const token = localStorage.getItem('token');
+  const user = localStorage.getItem('user');
+  const authBtn = document.getElementById('auth-btn');
+  const userDisplay = document.getElementById('user-display');
+  const secPublish = document.getElementById('sec-publish');
+  const secAuth = document.getElementById('sec-auth');
 
-    const file = fileInput.files[0];
-
-    if (!file) {
-        preview.style.display = 'none';
-        currentProductImage = null;
-        return;
-    }
-
-    const reader = new FileReader();
-
-    reader.onload = (e) => {
-        currentProductImage = e.target.result; // base64
-        previewTag.src = currentProductImage;
-        preview.style.display = 'block';
-    };
-
-    reader.readAsDataURL(file);
+  if (token && user) {
+    authBtn.innerText = 'Cerrar Sesión';
+    userDisplay.innerText = `Hola, ${user}`;
+    secPublish.classList.remove('hidden');
+    secAuth.classList.add('hidden');
+  } else {
+    authBtn.innerText = 'Iniciar Sesión / Registrarse';
+    userDisplay.innerText = '';
+    secPublish.classList.add('hidden');
+  }
+  loadProducts();
 }
 
 async function registerUser() {
-    const name = document.getElementById('reg-name').value.trim();
-    const email = document.getElementById('reg-email').value.trim();
-    const password = document.getElementById('reg-pass').value;
+  const name = document.getElementById('reg-name').value;
+  const email = document.getElementById('reg-email').value;
+  const password = document.getElementById('reg-pass').value;
 
-    const message = document.getElementById('reg-msg');
+  if (!name || !email || !password) {
+    document.getElementById('reg-msg').innerText = 'Todos los campos son obligatorios';
+    return;
+  }
 
-    if (!name || !email || !password) {
-        message.innerText = 'Completa todos los campos.';
-        return;
+  try {
+    const res = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password })
+    });
+    const data = await res.json();
+    if (res.ok || data.token) {
+      localStorage.setItem('token', data.token || 'jwt-token-demo');
+      localStorage.setItem('user', name);
+      localStorage.setItem('userId', data.user ? data.user.id : 'user-123');
+      document.getElementById('reg-msg').innerText = '¡Usuario registrado con éxito!';
+      setTimeout(() => {
+        document.getElementById('reg-msg').innerText = '';
+        updateUI();
+      }, 1000);
+    } else {
+      document.getElementById('reg-msg').innerText = data.error || 'Error al registrar';
     }
-
-    try {
-        const res = await fetch('/api/auth/register', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                name,
-                email,
-                password
-            })
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-            message.innerText = data.error || data.message || 'Error al registrar usuario.';
-            return;
-        }
-
-        message.innerText = data.message || 'Usuario registrado correctamente.';
-
-        document.getElementById('reg-name').value = '';
-        document.getElementById('reg-email').value = '';
-        document.getElementById('reg-pass').value = '';
-
-        // Marca la sesión como registrada y desbloquea "Publicar Producto"
-        sessionStorage.setItem('marketjhos_registered', 'true');
-        updateProductSectionVisibility();
-
-    } catch (err) {
-        console.error('Error al registrar usuario:', err);
-        message.innerText = 'Error al conectar con la API.';
-    }
+  } catch (err) {
+    document.getElementById('reg-msg').innerText = 'Error de conexión';
+  }
 }
 
+async function saveProduct() {
+  const editId = document.getElementById('edit-prod-id').value;
+  const title = document.getElementById('prod-title').value;
+  const price = document.getElementById('prod-price').value;
+  const category = document.getElementById('prod-cat').value;
+  const description = document.getElementById('prod-desc').value;
+  const userId = localStorage.getItem('userId') || 'user-123';
 
-async function createProduct() {
-    const title = document.getElementById('prod-title').value.trim();
-    const price = document.getElementById('prod-price').value;
-    const category = document.getElementById('prod-cat').value.trim();
+  if (!title || !price) {
+    document.getElementById('prod-msg').innerText = 'Título y precio son obligatorios';
+    return;
+  }
 
-    const message = document.getElementById('prod-msg');
+  const payload = {
+    title,
+    price,
+    category,
+    description,
+    sellerId: userId
+  };
+  if (base64Image) payload.image = base64Image;
 
-    if (!title || !price || !category) {
-        message.innerText = 'Completa todos los campos del producto.';
-        return;
+  const url = editId ? `/api/products/${editId}` : '/api/products';
+  const method = editId ? 'PUT' : 'POST';
+
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      document.getElementById('prod-msg').innerText = editId ? 'Producto actualizado correctamente.' : 'Producto publicado correctamente.';
+      cancelEdit();
+      loadProducts();
+      setTimeout(() => { document.getElementById('prod-msg').innerText = ''; }, 2000);
     }
-
-    try {
-        const res = await fetch('/api/products', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                title,
-                price,
-                category,
-                imageUrl: currentProductImage || undefined
-            })
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-            message.innerText = data.error || data.message || 'Error al publicar producto.';
-            return;
-        }
-
-        message.innerText = data.message || 'Producto publicado correctamente.';
-
-        document.getElementById('prod-title').value = '';
-        document.getElementById('prod-price').value = '';
-        document.getElementById('prod-cat').value = '';
-        document.getElementById('prod-img').value = '';
-        document.getElementById('img-preview').style.display = 'none';
-        currentProductImage = null;
-
-        await loadProducts();
-
-    } catch (err) {
-        console.error('Error al publicar producto:', err);
-        message.innerText = 'Error al conectar con la API.';
-    }
+  } catch (err) {
+    document.getElementById('prod-msg').innerText = 'Error al guardar producto';
+  }
 }
 
+function editProduct(product) {
+  document.getElementById('edit-prod-id').value = product.id;
+  document.getElementById('prod-title').value = product.title;
+  document.getElementById('prod-price').value = product.price;
+  document.getElementById('prod-cat').value = product.category;
+  document.getElementById('prod-desc').value = product.description || '';
+  document.getElementById('form-product-title').innerText = 'Editar Producto';
+  document.getElementById('btn-save-prod').innerText = 'Guardar Cambios';
+  document.getElementById('btn-cancel-edit').classList.remove('hidden');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function cancelEdit() {
+  document.getElementById('edit-prod-id').value = '';
+  document.getElementById('prod-title').value = '';
+  document.getElementById('prod-price').value = '';
+  document.getElementById('prod-desc').value = '';
+  document.getElementById('prod-img').value = '';
+  base64Image = '';
+  document.getElementById('form-product-title').innerText = 'Publicar Producto para la Venta';
+  document.getElementById('btn-save-prod').innerText = 'Publicar Producto';
+  document.getElementById('btn-cancel-edit').classList.add('hidden');
+}
+
+async function deleteProduct(id) {
+  if (!confirm('¿Seguro que deseas eliminar este producto?')) return;
+  try {
+    const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+    if (res.ok) loadProducts();
+  } catch (err) {
+    alert('Error al eliminar el producto');
+  }
+}
+
+async function buyProduct(productId) {
+  const userId = localStorage.getItem('userId') || 'comprador-anonimo';
+  try {
+    const res = await fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ productId, buyerId: userId })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      alert('¡Compra realizada con éxito!');
+      loadProducts();
+    } else {
+      alert(data.error || 'No se pudo realizar la compra');
+    }
+  } catch (err) {
+    alert('Error al procesar la compra');
+  }
+}
 
 async function loadProducts() {
+  const search = document.getElementById('search-input').value;
+  const category = document.getElementById('filter-cat').value;
+  const maxPrice = document.getElementById('filter-price').value;
+  const currentUserId = localStorage.getItem('userId');
+
+  const params = new URLSearchParams();
+  if (search) params.append('search', search);
+  if (category) params.append('category', category);
+  if (maxPrice) params.append('maxPrice', maxPrice);
+
+  try {
+    const res = await fetch(`/api/products?${params.toString()}`);
+    const products = await res.json();
     const list = document.getElementById('product-list');
+    list.innerHTML = '';
 
-    try {
-        list.innerHTML = '<p>Cargando productos...</p>';
-
-        const res = await fetch('/api/products');
-
-        const products = await res.json();
-
-        if (!res.ok) {
-            list.innerHTML = `<p>Error al cargar los productos.</p>`;
-            return;
-        }
-
-        list.innerHTML = '';
-
-        if (!products || products.length === 0) {
-            list.innerHTML = `<p class="empty">No hay productos disponibles.</p>`;
-            return;
-        }
-
-        products.forEach(product => {
-            const productElement = document.createElement('div');
-            productElement.classList.add('product');
-
-            productElement.innerHTML = `
-                <img src="${product.imageUrl}" alt="${product.title}">
-                <strong>${product.title}</strong>
-                <p><strong>Precio:</strong> $${product.price}</p>
-                <p><strong>Categoría:</strong> ${product.category}</p>
-            `;
-
-            list.appendChild(productElement);
-        });
-
-    } catch (err) {
-        console.error('Error al cargar productos:', err);
-        list.innerHTML = `<p>Error al conectar con la API.</p>`;
+    if (!products || products.length === 0) {
+      list.innerHTML = '<p style="color: #777;">No hay productos que coincidan.</p>';
+      return;
     }
+
+    products.forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'product-card';
+      const isOwner = currentUserId && p.sellerId === currentUserId;
+
+      card.innerHTML = `
+        <img src="${p.image || 'https://via.placeholder.com/300x200?text=MarketJhos'}" alt="${p.title}">
+        <div class="product-info">
+          <div class="product-title">${p.title}</div>
+          <div class="product-price">$${p.price}</div>
+          <p style="font-size: 13px; color: #aaa; margin-bottom: 8px;">Categoría: ${p.category}</p>
+          <p style="font-size: 12px; color: #888;">Estado: ${p.status}</p>
+        </div>
+        <div class="product-actions">
+          ${p.status === 'Disponible' 
+            ? `<button class="btn-primary" style="font-size: 12px; padding: 6px 14px;" onclick="buyProduct('${p.id}')">Comprar Ahora</button>` 
+            : '<span style="color:#ff4d4d; font-size:12px; font-weight:bold;">VENDIDO</span>'}
+          ${isOwner ? `
+            <div>
+              <button class="btn-edit" onclick='editProduct(${JSON.stringify(p).replace(/'/g, "&apos;")})'>Editar</button>
+              <button class="btn-danger" onclick="deleteProduct('${p.id}')">Eliminar</button>
+            </div>
+          ` : ''}
+        </div>
+      `;
+      list.appendChild(card);
+    });
+  } catch (err) {
+    console.error('Error al cargar productos:', err);
+  }
 }
+
+document.addEventListener('DOMContentLoaded', updateUI);
