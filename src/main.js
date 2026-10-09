@@ -78,6 +78,7 @@ async function loginUser() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
     });
+    
     const data = await res.json();
     if (res.ok) {
       localStorage.setItem('token', data.token);
@@ -92,7 +93,8 @@ async function loginUser() {
       document.getElementById('reg-msg').innerText = data.error || 'Credenciales incorrectas';
     }
   } catch (err) {
-    document.getElementById('reg-msg').innerText = 'Error de conexión';
+    console.error('Error en login:', err);
+    document.getElementById('reg-msg').innerText = 'Error API: ' + (err.message || 'Sin respuesta del servidor');
   }
 }
 
@@ -112,6 +114,7 @@ async function registerUser() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, email, password })
     });
+
     const data = await res.json();
     if (res.ok) {
       localStorage.setItem('token', data.token);
@@ -126,7 +129,8 @@ async function registerUser() {
       document.getElementById('reg-msg').innerText = data.error || 'Error al registrar';
     }
   } catch (err) {
-    document.getElementById('reg-msg').innerText = 'Error de conexión';
+    console.error('Error al registrar:', err);
+    document.getElementById('reg-msg').innerText = 'Error API: ' + (err.message || 'Sin respuesta del servidor');
   }
 }
 
@@ -221,9 +225,13 @@ async function buyProduct(productId) {
 }
 
 async function loadProducts() {
-  const search = document.getElementById('search-input').value;
-  const category = document.getElementById('filter-cat').value;
-  const maxPrice = document.getElementById('filter-price').value;
+  const searchInput = document.getElementById('search-input');
+  const filterCat = document.getElementById('filter-cat');
+  const filterPrice = document.getElementById('filter-price');
+
+  const search = searchInput ? searchInput.value : '';
+  const category = filterCat ? filterCat.value : '';
+  const maxPrice = filterPrice ? filterPrice.value : '';
   const currentUserId = localStorage.getItem('userId');
 
   const params = new URLSearchParams();
@@ -235,6 +243,8 @@ async function loadProducts() {
     const res = await fetch(`/api/products?${params.toString()}`);
     const products = await res.json();
     const list = document.getElementById('product-list');
+    if (!list) return;
+
     list.innerHTML = '';
 
     if (!products || products.length === 0) {
