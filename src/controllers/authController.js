@@ -12,15 +12,21 @@ exports.register = async (req, res) => {
       return res.status(400).json({ error: 'El correo ya está registrado' });
     }
 
-    const newUser = await User.create({ name, email, password, phone: phone || '' });
+    const newUser = await User.create({
+      name,
+      email,
+      password,
+      phone: phone || ''
+    });
+
     return res.status(201).json({ 
       message: 'Usuario registrado con éxito', 
       token: 'jwt-token-demo-' + newUser._id, 
       user: { id: newUser._id.toString(), name: newUser.name, email: newUser.email } 
     });
   } catch (err) {
-    console.error('Error en register:', err);
-    return res.status(500).json({ error: 'Error interno en el servidor' });
+    console.error('Error detallado en register:', err);
+    return res.status(500).json({ error: 'Error interno en el servidor: ' + (err.message || 'Desconocido') });
   }
 };
 
@@ -43,6 +49,6 @@ exports.login = async (req, res) => {
     });
   } catch (err) {
     console.error('Error en login:', err);
-    return res.status(500).json({ error: 'Error interno en el servidor' });
+    return res.status(500).json({ error: 'Error interno en el servidor: ' + (err.message || 'Desconocido') });
   }
 };
