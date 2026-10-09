@@ -9,14 +9,32 @@ function previewImage(event) {
   }
 }
 
+function switchAuthTab(tab) {
+  const formLogin = document.getElementById('form-login');
+  const formRegister = document.getElementById('form-register');
+  const tabLogin = document.getElementById('tab-login');
+  const tabRegister = document.getElementById('tab-register');
+  document.getElementById('reg-msg').innerText = '';
+
+  if (tab === 'login') {
+    formLogin.classList.remove('hidden');
+    formRegister.classList.add('hidden');
+    tabLogin.classList.add('active');
+    tabRegister.classList.remove('active');
+  } else {
+    formLogin.classList.add('hidden');
+    formRegister.classList.remove('hidden');
+    tabLogin.classList.remove('active');
+    tabRegister.classList.add('active');
+  }
+}
+
 function toggleAuthSection() {
   const token = localStorage.getItem('token');
   if (token) {
-    // Si ya tiene sesión, el botón sirve para cerrar sesión
     localStorage.clear();
     updateUI();
   } else {
-    // Alterna la visibilidad del formulario de registro
     const secAuth = document.getElementById('sec-auth');
     secAuth.classList.toggle('hidden');
   }
@@ -43,6 +61,39 @@ function updateUI() {
   loadProducts();
 }
 
+async function loginUser() {
+  const email = document.getElementById('login-email').value;
+  const password = document.getElementById('login-pass').value;
+
+  if (!email || !password) {
+    document.getElementById('reg-msg').innerText = 'Ingresa correo y contraseña';
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', data.user.name);
+      localStorage.setItem('userId', data.user.id);
+      document.getElementById('reg-msg').innerText = '¡Sesión iniciada con éxito!';
+      setTimeout(() => {
+        document.getElementById('reg-msg').innerText = '';
+        updateUI();
+      }, 1000);
+    } else {
+      document.getElementById('reg-msg').innerText = data.error || 'Credenciales incorrectas';
+    }
+  } catch (err) {
+    document.getElementById('reg-msg').innerText = 'Error de conexión';
+  }
+}
+
 async function registerUser() {
   const name = document.getElementById('reg-name').value;
   const email = document.getElementById('reg-email').value;
@@ -60,10 +111,10 @@ async function registerUser() {
       body: JSON.stringify({ name, email, password })
     });
     const data = await res.json();
-    if (res.ok || data.token) {
-      localStorage.setItem('token', data.token || 'jwt-token-demo');
-      localStorage.setItem('user', name);
-      localStorage.setItem('userId', data.user ? data.user.id : 'user-123');
+    if (res.ok) {
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', data.user.name);
+      localStorage.setItem('userId', data.user.id);
       document.getElementById('reg-msg').innerText = '¡Usuario registrado con éxito!';
       setTimeout(() => {
         document.getElementById('reg-msg').innerText = '';
@@ -90,13 +141,7 @@ async function saveProduct() {
     return;
   }
 
-  const payload = {
-    title,
-    price,
-    category,
-    description,
-    sellerId: userId
-  };
+  const payload = { title, price, category, description, sellerId: userId };
   if (base64Image) payload.image = base64Image;
 
   const url = editId ? `/api/products/${editId}` : '/api/products';
@@ -109,7 +154,7 @@ async function saveProduct() {
       body: JSON.stringify(payload)
     });
     if (res.ok) {
-      document.getElementById('prod-msg').innerText = editId ? 'Producto actualizado correctamente.' : 'Producto publicado correctamente.';
+      document.getElementById('prod-msg').innerText = editId ? 'Producto actualizado.' : 'Producto publicado.';
       cancelEdit();
       loadProducts();
       setTimeout(() => { document.getElementById('prod-msg').innerText = ''; }, 2000);
@@ -200,12 +245,18 @@ async function loadProducts() {
       card.className = 'product-card';
       const isOwner = currentUserId && p.sellerId === currentUserId;
 
+      const catFormatted = p.category === 'vehiculos' ? 'Vehículos' 
+                         : p.category === 'tecnologia' ? 'Tecnología' 
+                         : p.category === 'ropa' ? 'Ropa / Moda' 
+                         : p.category === 'hogar' ? 'Hogar' 
+                         : 'Otro';
+
       card.innerHTML = `
         <img src="${p.image || 'https://via.placeholder.com/300x200?text=MarketJhos'}" alt="${p.title}">
         <div class="product-info">
           <div class="product-title">${p.title}</div>
           <div class="product-price">$${p.price}</div>
-          <p style="font-size: 13px; color: #aaa; margin-bottom: 8px;">Categoría: ${p.category}</p>
+          <p style="font-size: 13px; color: #aaa; margin-bottom: 8px;">Categoría: ${catFormatted}</p>
           <p style="font-size: 12px; color: #888;">Estado: ${p.status}</p>
         </div>
         <div class="product-actions">

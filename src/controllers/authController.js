@@ -11,5 +11,27 @@ exports.register = (req, res) => {
   }
 
   const newUser = userModel.create({ id: Date.now().toString(), name, email, password, phone });
-  return res.status(201).json({ message: 'Usuario registrado con éxito', token: 'jwt-token-demo', user: newUser });
+  return res.status(201).json({ 
+    message: 'Usuario registrado con éxito', 
+    token: 'jwt-token-demo-' + newUser.id, 
+    user: newUser 
+  });
+};
+
+exports.login = (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Ingresa correo y contraseña' });
+  }
+
+  const user = userModel.findByEmail(email);
+  if (!user || user.password !== password) {
+    return res.status(401).json({ error: 'Credenciales incorrectas' });
+  }
+
+  return res.json({ 
+    message: 'Inicio de sesión exitoso', 
+    token: 'jwt-token-demo-' + user.id, 
+    user 
+  });
 };
