@@ -9,6 +9,21 @@ function previewImage(event) {
   }
 }
 
+function toggleAuthModal() {
+  const token = localStorage.getItem('token');
+  if (token) {
+    localStorage.clear();
+    updateUI();
+  } else {
+    document.getElementById('auth-modal').classList.remove('hidden');
+  }
+}
+
+function closeAuthModal() {
+  document.getElementById('auth-modal').classList.add('hidden');
+  document.getElementById('reg-msg').innerText = '';
+}
+
 function switchAuthTab(tab) {
   const formLogin = document.getElementById('form-login');
   const formRegister = document.getElementById('form-register');
@@ -29,30 +44,17 @@ function switchAuthTab(tab) {
   }
 }
 
-function toggleAuthSection() {
-  const token = localStorage.getItem('token');
-  if (token) {
-    localStorage.clear();
-    updateUI();
-  } else {
-    const secAuth = document.getElementById('sec-auth');
-    secAuth.classList.toggle('hidden');
-  }
-}
-
 function updateUI() {
   const token = localStorage.getItem('token');
   const user = localStorage.getItem('user');
   const authBtn = document.getElementById('auth-btn');
   const userDisplay = document.getElementById('user-display');
   const secPublish = document.getElementById('sec-publish');
-  const secAuth = document.getElementById('sec-auth');
 
   if (token && user) {
     authBtn.innerText = 'Cerrar Sesión';
     userDisplay.innerText = `Hola, ${user}`;
     secPublish.classList.remove('hidden');
-    secAuth.classList.add('hidden');
   } else {
     authBtn.innerText = 'Iniciar Sesión / Registrarse';
     userDisplay.innerText = '';
@@ -83,9 +85,9 @@ async function loginUser() {
       localStorage.setItem('userId', data.user.id);
       document.getElementById('reg-msg').innerText = '¡Sesión iniciada con éxito!';
       setTimeout(() => {
-        document.getElementById('reg-msg').innerText = '';
+        closeAuthModal();
         updateUI();
-      }, 1000);
+      }, 800);
     } else {
       document.getElementById('reg-msg').innerText = data.error || 'Credenciales incorrectas';
     }
@@ -117,9 +119,9 @@ async function registerUser() {
       localStorage.setItem('userId', data.user.id);
       document.getElementById('reg-msg').innerText = '¡Usuario registrado con éxito!';
       setTimeout(() => {
-        document.getElementById('reg-msg').innerText = '';
+        closeAuthModal();
         updateUI();
-      }, 1000);
+      }, 800);
     } else {
       document.getElementById('reg-msg').innerText = data.error || 'Error al registrar';
     }

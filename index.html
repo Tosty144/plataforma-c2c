@@ -12,17 +12,13 @@
     .brand-title { font-size: 26px; font-weight: bold; color: #FFD700; text-transform: uppercase; letter-spacing: 1px; }
     
     .nav-buttons { display: flex; align-items: center; gap: 15px; }
-    .btn-auth { background-color: #FFD700; color: #000; font-weight: bold; padding: 8px 18px; border: none; border-radius: 20px; cursor: pointer; font-size: 14px; }
-    .btn-auth:hover { background-color: #e6c200; }
+    .btn-auth { background-color: #FFD700; color: #000; font-weight: bold; padding: 8px 18px; border: none; border-radius: 20px; cursor: pointer; font-size: 14px; transition: transform 0.2s; }
+    .btn-auth:hover { background-color: #e6c200; transform: scale(1.03); }
 
     .container { max-width: 1100px; margin: 30px auto; padding: 0 20px; }
 
     .card { background-color: #1a1a1a; border: 1px solid #333; border-radius: 8px; padding: 25px; margin-bottom: 25px; }
     .card h2 { color: #FFD700; font-size: 22px; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 8px; }
-
-    .auth-tabs { display: flex; gap: 10px; margin-bottom: 15px; }
-    .tab-btn { background: #222; color: #aaa; border: 1px solid #444; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-    .tab-btn.active { background: #FFD700; color: #000; border-color: #FFD700; }
 
     .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 15px; }
     input, select, textarea { width: 100%; padding: 10px; border: 1px solid #444; border-radius: 4px; background-color: #222; color: #fff; font-size: 14px; }
@@ -41,8 +37,18 @@
     .product-price { color: #FFD700; font-size: 20px; font-weight: bold; margin-bottom: 8px; }
     .product-actions { padding: 10px 15px; background: #161616; border-top: 1px solid #2a2a2a; display: flex; gap: 8px; justify-content: space-between; align-items: center; }
 
+    /* ESTILOS DEL MODAL POP-UP */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 1; transition: opacity 0.3s ease; }
+    .modal-content { background: #1a1a1a; border: 1px solid #FFD700; border-radius: 12px; width: 90%; max-width: 420px; padding: 30px; position: relative; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8); }
+    .close-modal { position: absolute; top: 15px; right: 20px; color: #888; font-size: 24px; cursor: pointer; font-weight: bold; }
+    .close-modal:hover { color: #FFD700; }
+
+    .auth-tabs { display: flex; border-bottom: 1px solid #333; margin-bottom: 20px; }
+    .tab-btn { flex: 1; background: none; color: #888; border: none; padding: 10px; cursor: pointer; font-weight: bold; font-size: 15px; text-align: center; border-bottom: 2px solid transparent; }
+    .tab-btn.active { color: #FFD700; border-bottom: 2px solid #FFD700; }
+
     .hidden { display: none !important; }
-    .message { margin-top: 10px; font-size: 14px; color: #FFD700; }
+    .message { margin-top: 10px; font-size: 14px; color: #FFD700; text-align: center; }
   </style>
 </head>
 <body>
@@ -51,14 +57,15 @@
     <div class="brand-title">MarketJhos</div>
     <div class="nav-buttons">
       <span id="user-display" style="color: #ccc; font-size: 14px;"></span>
-      <button id="auth-btn" class="btn-auth" onclick="toggleAuthSection()">Iniciar Sesión / Registrarse</button>
+      <button id="auth-btn" class="btn-auth" onclick="toggleAuthModal()">Iniciar Sesión / Registrarse</button>
     </div>
   </header>
 
-  <div class="container">
-
-    <!-- Tarjeta de Autenticación con Pestañas -->
-    <section id="sec-auth" class="card hidden">
+  <!-- MODAL FLOTANTE DE AUTENTICACIÓN -->
+  <div id="auth-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <span class="close-modal" onclick="closeAuthModal()">&times;</span>
+      
       <div class="auth-tabs">
         <button id="tab-login" class="tab-btn active" onclick="switchAuthTab('login')">Iniciar Sesión</button>
         <button id="tab-register" class="tab-btn" onclick="switchAuthTab('register')">Registrarse</button>
@@ -66,27 +73,30 @@
 
       <!-- Formulario Login -->
       <div id="form-login">
-        <div class="form-grid">
+        <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 15px;">
           <input type="email" id="login-email" placeholder="Correo electrónico">
           <input type="password" id="login-pass" placeholder="Contraseña">
         </div>
-        <button class="btn-primary" onclick="loginUser()">Ingresar</button>
+        <button class="btn-primary" style="width: 100%; border-radius: 6px;" onclick="loginUser()">Ingresar</button>
       </div>
 
       <!-- Formulario Registro -->
       <div id="form-register" class="hidden">
-        <div class="form-grid">
+        <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 15px;">
           <input type="text" id="reg-name" placeholder="Nombre completo">
           <input type="email" id="reg-email" placeholder="Correo electrónico">
           <input type="password" id="reg-pass" placeholder="Contraseña">
         </div>
-        <button class="btn-primary" onclick="registerUser()">Registrarse</button>
+        <button class="btn-primary" style="width: 100%; border-radius: 6px;" onclick="registerUser()">Registrarse</button>
       </div>
 
       <div id="reg-msg" class="message"></div>
-    </section>
+    </div>
+  </div>
 
-    <!-- Publicar / Editar Producto (Solo tras iniciar sesión) -->
+  <div class="container">
+
+    <!-- Publicar / Editar Producto (Solo visible tras iniciar sesión) -->
     <section id="sec-publish" class="card hidden">
       <h2 id="form-product-title">Publicar Producto para la Venta</h2>
       <input type="hidden" id="edit-prod-id">
