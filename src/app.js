@@ -11,12 +11,16 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
-// Conexión a MongoDB usando la variable de entorno de Vercel (o fallback local/remoto)
-const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://jvaronm_db_user:IjGnYYcnjfPyX0aI@marketsistemico.0xw0zdd.mongodb.net/marketjhos?retryWrites=true&w=majority";
+// Conexión segura usando ÚNICAMENTE la variable de entorno de Vercel
+const MONGO_URI = process.env.MONGO_URI;
 
-mongoose.connect(MONGO_URI)
-  .then(() => console.log('Conectado con éxito a MongoDB Atlas'))
-  .catch((err) => console.error('Error al conectar a MongoDB:', err));
+if (!MONGO_URI) {
+  console.error('❌ Error: La variable de entorno MONGO_URI no está definida.');
+} else {
+  mongoose.connect(MONGO_URI)
+    .then(() => console.log('✅ Conectado con éxito a MongoDB Atlas'))
+    .catch((err) => console.error('❌ Error de conexión a MongoDB:', err));
+}
 
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
