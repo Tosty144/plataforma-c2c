@@ -1,22 +1,22 @@
 const mongoose = require('mongoose');
 
-let isConnected = false;
+let cached = global._mongoose;
+if (!cached) cached = global._mongoose = { conn: null, promise: null };
 
 async function connectDB() {
-  if (isConnected && mongoose.connection.readyState === 1) {
-    return;
-  }
+  if (cached.conn) return cached.conn;
 
-  const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://jvaronm_db_user:IjGnYYcnjfPyX0aI@marketsistemico.0xw0zdd.mongodb.net/marketjhos?retryWrites=true&w=majority";
+  const uri = process.env.MONGO_URI;
+  if (!uri) throw new Error('MONGO_URI no está definida');
 
-  try {
-    const db = await mongoose.connect(MONGO_URI);
-    isConnected = db.connections[0].readyState === 1;
-    console.log('✅ Conectado a MongoDB Atlas');
-  } catch (err) {
-    console.error('❌ Error al conectar con MongoDB Atlas:', err);
-    throw err;
+  if (!cached.promise) {
+    cached.promise = mongoose.connect(uri, {
+      bufferCommands: false,
+      serverSelectionTimeoutMS: 8000,
+    });
   }
+  cached.conn = await cached.promise;
+  return cached.conn;
 }
 
 module.exports = connectDB;
