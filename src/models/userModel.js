@@ -1,10 +1,10 @@
-// Simulación de Base de Datos en memoria (Reemplazar por Mongoose / Prisma)
-const users = [];
+const mongoose = require('mongoose');
 
-module.exports = {
-  findByEmail: (email) => users.find(u => u.email === email),
-  create: (userData) => {
-    users.push(userData);
-    return userData;
-  }
-};
+const userSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  phone: { type: String, default: '' }
+}, { timestamps: true });
+
+module.exports = mongoose.model('User', userSchema);

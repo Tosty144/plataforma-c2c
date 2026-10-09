@@ -1,15 +1,9 @@
-const orders = [];
+const mongoose = require('mongoose');
 
-module.exports = {
-  create: (orderData) => {
-    const newOrder = {
-      id: Date.now().toString(),
-      ...orderData,
-      createdAt: new Date()
-    };
-    orders.push(newOrder);
-    return newOrder;
-  },
-  getAll: () => orders,
-  findById: (id) => orders.find(o => o.id === id)
-};
+const orderSchema = new mongoose.Schema({
+  productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
+  buyerId: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now }
+});
+
+module.exports = mongoose.model('Order', orderSchema);
